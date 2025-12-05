@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Manager Dashboard</title>
+<style>
+  body{font-family:Arial;background:#0f172a;color:#e6eef8;margin:0}
+  header{background:#071026;padding:12px}
+  .container{display:flex;gap:18px;padding:18px}
+  .left{width:260px;background:#071026;padding:12px;border-radius:10px}
+  .main{flex:1;background:#071026;padding:12px;border-radius:10px}
+  .team{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .btn{background:#38bdf8;color:#042033;padding:8px;border-radius:8px;border:none;cursor:pointer}
+  input,select{width:100%;padding:8px;margin:6px 0;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  a{color:#94a3b8;text-decoration:none}
+</style>
+</head>
+<body>
+<header><strong>Cogni — Manager</strong> &nbsp; <a href="/logout">Logout</a></header>
+<div class="container">
+  <div class="left">
+    <h3>Teams</h3>
+    <div id="teamsList"></div>
+    <hr/>
+    <input id="newTeamName" placeholder="New team name"/>
+    <button class="btn" onclick="createTeam()">Create team</button>
+  </div>
+
+  <div class="main">
+    <h3>Employees</h3>
+    <div style="display:flex;gap:12px">
+      <input id="empUsername" placeholder="username"/>
+      <input id="empPassword" placeholder="password"/>
+      <input id="empFullName" placeholder="full name"/>
+      <select id="empTeam"><option value="">-- team --</option></select>
+      <button class="btn" onclick="addEmployee()">Add</button>
+    </div>
+    <div id="userList" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+async function loadData(){
+  const resT = await fetch("/api/teams");
+  const teams = await resT.json();
+  const tdiv = document.getElementById("teamsList");
+  tdiv.innerHTML = "";
+  const teamSelect = document.getElementById("empTeam");
+  teamSelect.innerHTML = '<option value="">-- team --</option>';
+  teams.teams.forEach(t=>{
+    const el = document.createElement("div");
+    el.className = "team";
+    el.innerHTML = `<strong>${t.name}</strong> <small style="color:#94a3b8">(${t.employees.length})</small>
+      <div style="margin-top:6px"><button onclick="deleteTeam(${t.id})" class="btn">Delete</button></div>`;
+    tdiv.appendChild(el);
+    const opt = document.createElement("option"); opt.value = t.id; opt.textContent = t.name;
+    teamSelect.appendChild(opt);
+  });
+
+  const resU = await fetch("/api/users");
+  const users = await resU.json();
+  const udiv = document.getElementById("userList");
+  udiv.innerHTML = "";
+  Object.keys(users).forEach(k=>{
+    const u = users[k];
+    const row = document.createElement("div");
+    row.style.padding="8px"; row.style.borderBottom="1px solid rgba(255,255,255,0.03)";
+    row.innerHTML = `<strong>${k}</strong> &nbsp; <small style="color:#94a3b8">${u.full_name || ''}</small>
+      &nbsp; <small style="color:#94a3b8">${u.role}</small>
+      <div style="float:right">
+        ${u.role === 'employee' ? `<a href="/manager/employee/${k}">History</a> &nbsp; <button class="btn" onclick="deleteEmp('${k}')">Delete</button>` : ''}
+      </div>`;
+    udiv.appendChild(row);
+  });
+}
+
+async function createTeam(){
+  const name = document.getElementById("newTeamName").value.trim();
+  if(!name) return alert("Enter name");
+  await fetch("/api/team", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name})});
+  document.getElementById("newTeamName").value="";
+  loadData();
+}
+
+async function deleteTeam(id){
+  if(!confirm("Delete team?")) return;
+  await fetch("/api/team/" + id, {method:"DELETE"});
+  loadData();
+}
+
+async function addEmployee(){
+  const username = document.getElementById("empUsername").value.trim();
+  const password = document.getElementById("empPassword").value.trim();
+  const name = document.getElementById("empFullName").value.trim();
+  const team_id = document.getElementById("empTeam").value || null;
+  if(!username || !password) return alert("username & password required");
+  const res = await fetch("/api/employee", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username,password,name,team_id})});
+  const j = await res.json();
+  if(j.error) return alert("Error: "+j.error);
+  document.getElementById("empUsername").value=""; document.getElementById("empPassword").value=""; document.getElementById("empFullName").value="";
+  loadData();
+}
+
+async function deleteEmp(username){
+  if(!confirm("Delete user "+username+"?")) return;
+  await fetch("/api/employee/" + username, {method:"DELETE"});
+  loadData();
+}
+
+loadData();
+</script>
+</body>
+</html>

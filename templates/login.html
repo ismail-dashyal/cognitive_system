@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Cogni Login</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0f172a;color:#e6eef8;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .box{background:#0b1220;padding:28px;border-radius:12px; width:340px; box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+    h2{color:#38bdf8;margin:0 0 12px}
+    input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    button{width:100%;padding:10px;border-radius:8px;border:none;background:#38bdf8;color:#042033;font-weight:700}
+    .error{color:#ff8b8b;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Cogni — Sign in</h2>
+    <form method="post">
+      <input name="username" placeholder="Username" required />
+      <input name="password" placeholder="Password" type="password" required/>
+      <button type="submit">Sign in</button>
+    </form>
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+    <p style="margin-top:12px;color:#94a3b8;font-size:13px">Manager or Employee accounts</p>
+  </div>
+</body>
+</html>

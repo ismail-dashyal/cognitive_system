@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Employee History</title>
+<style>
+  body{font-family:Arial;background:#0f172a;color:#e6eef8;padding:18px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  th{color:#94a3b8}
+</style>
+</head>
+<body>
+  <h2>History for {{ username }}</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Stress</th><th>Fatigue</th><th>Attention</th><th>Face</th><th>Voice</th></tr></thead>
+    <tbody>
+      {% for s in history %}
+        <tr>
+          <td>{{ s.time }}</td>
+          <td>{{ "%.2f"|format(s.stress) }}</td>
+          <td>{{ "%.2f"|format(s.fatigue) }}</td>
+          <td>{{ "%.2f"|format(s.attention) }}</td>
+          <td>{{ s.face }}</td>
+          <td>{{ s.voice }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p><a href="/manager">Back to Manager</a></p>
+</body>
+</html>

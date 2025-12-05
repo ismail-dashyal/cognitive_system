@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Employee Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#0f172a;color:#e6eef8;margin:0}
+    header{background:#0b1220;padding:14px 18px}
+    .container{padding:18px}
+    .cards{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:#071026;padding:12px;border-radius:10px;min-width:160px;text-align:center}
+    .value{font-size:26px;color:#38bdf8}
+    footer{color:#94a3b8;padding:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Cogni — Employee</strong> &nbsp; <small style="color:#94a3b8">{{ username }}</small></div>
+      <div><a href="/logout" style="color:#94a3b8;text-decoration:none">Logout</a></div>
+    </div>
+  </header>
+  <div class="container">
+    <div class="cards">
+      <div class="card">
+        <div style="font-size:13px;color:#94a3b8">Stress</div>
+        <div class="value" id="stressVal">--</div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:#94a3b8">Fatigue</div>
+        <div class="value" id="fatigueVal">--</div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:#94a3b8">Attention</div>
+        <div class="value" id="attentionVal">--</div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;background:#071026;padding:12px;border-radius:10px">
+      <canvas id="trendChart"></canvas>
+    </div>
+    <div id="feedback" style="margin-top:12px;color:#ffd6a5"></div>
+  </div>
+  <footer>Last updated: <span id="timestamp">--:--</span></footer>
+
+<script>
+const username = "{{ username }}";
+const ctx = document.getElementById("trendChart").getContext("2d");
+const trendChart = new Chart(ctx, { type:'line', data:{ labels:[], datasets:[
+  {label:"Stress", data:[], borderColor:"#ef4444", fill:false},
+  {label:"Fatigue", data:[], borderColor:"#facc15", fill:false},
+  {label:"Attention", data:[], borderColor:"#22c55e", fill:false}
+]}, options:{scales:{y:{beginAtZero:true,max:1}}}});
+
+async function fetchState(){
+  try{
+    const res = await fetch("/api/state/" + username);
+    const data = await res.json();
+    if (data && data.time && data.status !== "no-data"){
+      document.getElementById("stressVal").textContent = Math.round(data.stress*100) + "%";
+      document.getElementById("fatigueVal").textContent = Math.round(data.fatigue*100) + "%";
+      document.getElementById("attentionVal").textContent = Math.round(data.attention*100) + "%";
+      document.getElementById("timestamp").textContent = data.time;
+
+      trendChart.data.labels.push(data.time);
+      trendChart.data.datasets[0].data.push(data.stress);
+      trendChart.data.datasets[1].data.push(data.fatigue);
+      trendChart.data.datasets[2].data.push(data.attention);
+
+      if(trendChart.data.labels.length > 15){
+        trendChart.data.labels.shift();
+        trendChart.data.datasets.forEach(d=>d.data.shift());
+      }
+      trendChart.update();
+
+      // feedback logic
+      const fb = document.getElementById("feedback");
+      if (data.stress > 0.75) fb.textContent = "High stress detected — try a short break or breathing exercise.";
+      else if (data.fatigue > 0.8) fb.textContent = "High fatigue detected — consider taking a rest.";
+      else fb.textContent = "";
+    }
+  }catch(e){ console.error(e); }
+}
+
+fetchState();
+setInterval(fetchState, 60*1000); // every minute
+</script>
+</body>
+</html>
